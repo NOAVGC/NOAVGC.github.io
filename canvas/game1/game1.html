@@ -283,6 +283,8 @@
                     if (myGamePiece.crashWith(myObstacles[i])) {
                         var explosion = new component(82, 91, "assets/images/explosion.png", myGamePiece.x - 10, myGamePiece.y - 20, "image");
                         explosion.update();
+                        fire.image.src = "";
+                        fire.update();
                         //timeout function
                         setTimeout(function () { clearInterval(this.interval); }, 200);
                         deathSound.play();
