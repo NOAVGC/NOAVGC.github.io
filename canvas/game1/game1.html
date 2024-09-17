@@ -283,6 +283,7 @@
                     if (myGamePiece.crashWith(myObstacles[i])) {
                         var explosion = new component(82, 91, "assets/images/explosion.png", myGamePiece.x - 10, myGamePiece.y - 20, "image");
                         explosion.update();
+                        ctx.drawImage(explosion.image, myGamePiece.x - 10, myGamePiece.y - 20, 82, 91);
                         deathSound.play();
                         myMusic.stop();
                         myGameArea.stop();
