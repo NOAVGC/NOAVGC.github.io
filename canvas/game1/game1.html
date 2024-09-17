@@ -10,6 +10,7 @@
     </style>
 </head>
 <body>
+    <h1 style="color:blue;">Laser Gate Panic!</h1>
     <script>
 
         var myGamePiece;
@@ -52,13 +53,13 @@
                 this.frameNo = 0;
                 this.interval = setInterval(updateGameArea, 16.66);
                 window.addEventListener('keydown', function (e) {
-                    
+
                     myGameArea.keys = (myGameArea.keys || []);
                     myGameArea.keys[e.keyCode] = true;
                 })
                 window.addEventListener('keyup', function (e) {
                     thrusterSound.stop();
-                    if (e.keyCode==32) {
+                    if (e.keyCode == 32) {
                         myGamePiece.swapColor();
                     }
                     myGameArea.keys[e.keyCode] = false;
@@ -84,7 +85,7 @@
             if (type == "red") {
                 this.currentColor = 1;
             }
-            if (type == "blue"||type == "ship") {
+            if (type == "blue" || type == "ship") {
                 this.currentColor = 0;
             }
             if (type == "image" || type == "background" || type == "ship" || type == "fire") {
@@ -108,7 +109,7 @@
                         ctx.drawImage(this.image, this.x + this.width, this.y, this.width, this.height);
                     }
                 } else if (this.type == "ship") {
-                    if (this.currentColor==0) {
+                    if (this.currentColor == 0) {
                         this.image = new Image();
                         this.image.src = "assets/images/shipBlue.png";
                     } else {
@@ -121,21 +122,21 @@
                         this.width, this.height);
                 } else if (this.type == "fire") {
                     if ((myGameArea.frameNo % 2) == 0) {
-                        if (this.fireFrame==1) {
+                        if (this.fireFrame == 1) {
                             this.image.src = "assets/images/fire2.png";
                             this.fireFrame = 2;
                         } else if (this.fireFrame == 2) {
                             this.image.src = "assets/images/fire3.png";
                             this.fireFrame = 3;
-                        } else if (this.fireFrame ==3) {
+                        } else if (this.fireFrame == 3) {
                             this.image.src = "assets/images/fire4.png";
                             this.fireFrame = 4;
-                        }else {
+                        } else {
                             this.image.src = "assets/images/fire1.png";
                             this.fireFrame = 1;
                         }
-                    } 
-                    
+                    }
+
                     ctx.drawImage(this.image, myGamePiece.x - 27.87, myGamePiece.y + 15.55, 27.87, 12.59)
                 } else if (this.type == "text") {
                     ctx.font = this.width + " " + this.height;
@@ -159,6 +160,20 @@
                 if (this.type == "background") {
                     if (this.x == -(this.width)) {
                         this.x = 0;
+                    }
+                }
+                if (this.type == "ship") {
+                    if (this.x <= 0) {
+                        this.x = 0;
+                    }
+                    if (this.x >= 450) {
+                        this.x = 450;
+                    }
+                    if (this.y <= 0) {
+                        this.y = 0;
+                    }
+                    if (this.y >= 225) {
+                        this.y = 225;
                     }
                 }
             }
@@ -223,18 +238,13 @@
                         (myleft5 > otherright))) {
                     crash = false;
                 }
-                if (crash && (otherColor==0 || otherColor == 1)) {
+                if (crash && (otherColor == 0 || otherColor == 1)) {
                     if (myColor == otherColor) {
                         crash = false;
                         laserSound.play();
                     } else {
                         crash = true;
                     }
-                }
-                if (crash) {
-                    myGamePiece.image = new Image();
-                    myGamePiece.image.src = "assets/images/explosion.png";
-                    ctx.drawImage(myGamePiece.image, myGamePiece.x - 10, myGamePiece.y - 20, 82, 91);
                 }
                 return crash;
             }
@@ -271,6 +281,8 @@
                 var x, height, gap, minHeight, maxHeight, minGap, maxGap, color;
                 for (i = 0; i < myObstacles.length; i += 1) {
                     if (myGamePiece.crashWith(myObstacles[i])) {
+                        var explosion = new component(82, 91, "assets/images/explosion.png", myGamePiece.x - 10, myGamePiece.y - 20, "image");
+                        explosion.update();
                         deathSound.play();
                         myMusic.stop();
                         myGameArea.stop();
@@ -334,7 +346,7 @@
                 myGamePiece.update();
                 fire.update();
                 for (i = 0; i < myObstacles.length; i += 1) {
-                    myObstacles[i].speedX = -1;
+                    myObstacles[i].speedX = -1.5;
                     myObstacles[i].newPos();
                     myObstacles[i].update();
                 }
