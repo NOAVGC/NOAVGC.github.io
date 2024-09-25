@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8" />
@@ -46,7 +46,7 @@
             const [game, setGame] = React.useState(initialGameState); //state hook for current game board
             const [selectedSquare, setSelectedSquare] = React.useState(null); // State hook for currently selected square
             const [player, setPlayer] = React.useState("Blue");  //state hook for current turn
-            const [voice, setVoice] = React.useState(true);
+            const [voice, setVoice] = React.useState(false);
 
             // Handle changing current player
             function changePlayer(isGameOver) {
@@ -56,12 +56,30 @@
                     } else {
                         setPlayer("Blue");
                     }
-                } else {
-                    setPlayer("Game Over! ".concat(player).concat("wins!"))
+                } else { // activated when game ends
+                    setPlayer("Game Over! ".concat(player).concat(" wins!"));
                 }
             }
 
-            function speak(row, col, piece) {
+            function forfeit() { // code to make forfeit button work
+                setPlayer("Game Over! ".concat(player).concat(" loses!")); // calls end game condition on changePlayer
+            }
+
+            function restartGame() { // code to restart game
+                window.location.reload(); // refreshes page
+            }
+
+            function toggleVoice() { // switches voice on and off
+                let nextVoice = !voice;
+                setVoice(!voice);
+                if (nextVoice) {
+                    alert("Speech is on!");
+                } else {
+                    alert("Speech is off!");
+                }
+            }
+
+            function speak(row, col, piece) { // tells voice what to say
                 let sRow = row;
                 let sCol = col;
                 let sPiece = piece;
@@ -127,11 +145,11 @@
             }
 
             function proposeMove(currentMap, destRow, destCol, selectRow, selectCol, selectedPiece) {  // Function to see if move is not blocked and won't put player in check.
-                if (selectedPiece == 'r') {
+                if (selectedPiece == 'r') { // check if rook is blocked
                     if (!isBlockedVert(currentMap, Math.max(destRow, selectRow), Math.min(destRow, selectRow), selectCol) && !isBlockedHoriz(currentMap, Math.max(destCol, selectCol), Math.min(destCol, selectCol), selectRow)) {
                         makeMove(currentMap, destRow, destCol, selectRow, selectCol);
                     }
-                } else if (selectedPiece == 'b') {
+                } else if (selectedPiece == 'b') { // check if bishop is blocked
                     if (((selectRow - destRow) / (selectCol - destCol)) < 0) {
                         if (!isBlockedUpRight(currentMap, Math.max(destCol, selectCol), Math.min(destCol, selectCol), Math.max(destRow, selectRow))) {
                             makeMove(currentMap, destRow, destCol, selectRow, selectCol);
@@ -141,7 +159,7 @@
                             makeMove(currentMap, destRow, destCol, selectRow, selectCol);
                         }
                     }
-                } else if (selectedPiece == 'q') {
+                } else if (selectedPiece == 'q') { // check if queen is blocked
                     if (selectRow == destRow || selectCol == destCol) {
                         if (!isBlockedVert(currentMap, Math.max(destRow, selectRow), Math.min(destRow, selectRow), selectCol) && !isBlockedHoriz(currentMap, Math.max(destCol, selectCol), Math.min(destCol, selectCol), selectRow) ) {
                             makeMove(currentMap, destRow, destCol, selectRow, selectCol);
@@ -161,7 +179,7 @@
             }
 
             function makeMove(currentMap, destRow, destCol, selectRow, selectCol) { // Actually make the move
-                if (currentMap[destRow][destCol].toLowerCase() == 'k') {
+                if (currentMap[destRow][destCol].toLowerCase() == 'k') { // check if king is taken
                     currentMap[destRow][destCol] = currentMap[selectRow][selectCol]; // Move the piece to the new location
                     currentMap[selectRow][selectCol] = ''; // This line sets the old space to blank
                     setGame(currentMap); // Update function for hook, feeds the new board image
@@ -169,7 +187,7 @@
                         speak(destRow, destCol, currentMap[destRow][destCol]);
                     }
                     setSelectedSquare(null); // Update function for selectedsquare hook
-                    changePlayer(true);
+                    changePlayer(true); // activates game over state
                 } else {
                     currentMap[destRow][destCol] = currentMap[selectRow][selectCol]; // Move the piece to the new location
                     currentMap[selectRow][selectCol] = ''; // This line sets the old space to blank
@@ -202,7 +220,7 @@
                 return isBlocked;
             }
 
-            function isBlockedUpRight(map, highCol, lowCol, highRow) {
+            function isBlockedUpRight(map, highCol, lowCol, highRow) { // check if movement is blocked in up-right or down-left direction
                 let isBlocked = false;
                 for (i = lowCol + 1; i < highCol; i++) {
                     if (map[highRow - i + lowCol][i]) {
@@ -212,7 +230,7 @@
                 return isBlocked;
             }
 
-            function isBlockedDownRight(map, highCol, lowCol, lowRow) {
+            function isBlockedDownRight(map, highCol, lowCol, lowRow) { // check if movement is blocked in down-right or up-left direction
                 let isBlocked = false;
                 for (i = lowCol + 1; i < highCol; i++) {
                     if (map[lowRow + i - lowCol][i]) {
@@ -222,7 +240,7 @@
                 return isBlocked;
             }
 
-            function handleClick(row, col) {
+            function handleClick(row, col) { // called when a square on the board is clicked
                 if (selectedSquare) {      // This branch runs if a square has already been selected
                     const newGame = game.map(row => row.slice()); // Copies current game state into a new board
                     const [selectedRow, selectedCol] = selectedSquare; // Creates constants for currently selected location
@@ -271,8 +289,14 @@
                 }
             }
 
-            return (
+            return ( //returns the board and functional game
                 <div>
+                    <h1>Current player: {player}</h1>
+                    <button type="button" onClick={toggleVoice}>
+                        Toggle Voice
+                    </button>
+                    <button type="button" onClick={forfeit}>Forfeit</button>
+                    <button type="button" onClick={restartGame}>Restart Game</button>
                     <Board game={game} onSquareClick={handleClick} selectedSquare={selectedSquare} />
                 </div>
             );
@@ -282,10 +306,10 @@
         function Board({ game, onSquareClick, selectedSquare }) {
             return (
                 <div>
-                    {game.map((row, rowIndex) => (
+                    {game.map((row, rowIndex) => ( // adds row index to each row
                         <div key={rowIndex} style={{ display: 'flex' }}>
-                            {row.map((value, colIndex) => (
-                                <Square
+                            {row.map((value, colIndex) => ( //adds column index
+                                <Square // creates a new square
                                     key={colIndex}
                                     value={value}
                                     onClick={() => onSquareClick(rowIndex, colIndex)}
@@ -300,14 +324,14 @@
         }
 
         function Square({ value, onClick, isLight, isSelected }) {
-            const squareStyle = {
+            const squareStyle = { //defines the style of a square
                 width: '80px',
                 height: '80px',
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
                 cursor: 'pointer',
-                backgroundColor: isSelected ? '#FF00C1' : (isLight ? '#8B6DB0' : '#7852A1'),
+                backgroundColor: isSelected ? '#FF00C1' : (isLight ? '#8B6DB0' : '#7852A1'), //chooses between dark and light square
                 border: '1px solid #999'
             };
 
@@ -319,15 +343,15 @@
                 return null;
             };
 
-            return (
+            return ( // returns the completed square
                 <button style={squareStyle} onClick={onClick}>
                     {pieceDisplay()}
                 </button>
             );
         }
 
-        const root = ReactDOM.createRoot(document.getElementById("root"));
-        root.render(<Game />);
+        const root = ReactDOM.createRoot(document.getElementById("root")); //sets the react root
+        root.render(<Game />); // renders the entire game
     </script>
 </body>
 </html>
