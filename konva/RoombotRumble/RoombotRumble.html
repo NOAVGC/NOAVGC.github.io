@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src="konva.js"></script>
+    <meta charset="utf-8" />
+    <title>Roombot Rumble</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #f0f0f0;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="container"></div>
+    <script>
+
+        var stageWidth = 1200;
+        var stageHeight = 900;
+        // create the stage
+        var stage = new Konva.Stage({
+            container: 'container',
+            width: stageWidth,
+            height: stageHeight,
+        });
+        bonk = new Audio('assets/sounds/bonk.ogg');
+
+        paper = new Audio('assets/sounds/paper.mp3');
+        timeUp = new Audio('assets/sounds/timeUp.mp3');
+        timeUp.preload = "auto";
+        // import the background image
+        var bgLayer = new Konva.Layer();
+        stage.add(bgLayer);
+        Konva.Image.fromURL('https://NOAVGC.github.io/konva/RoombotRumble/assets/images/background.svg', (bgImage) => {
+            bgLayer.add(bgImage);
+            bgImage.setAttrs({
+                width: 1200,
+                height: 900,
+            })
+        });
+
+        var garbageLayer = new Konva.Layer();
+        stage.add(garbageLayer);
+
+        var playerLayer = new Konva.Layer();
+        stage.add(playerLayer);
+
+        var wallGroup = new Konva.Group();
+        bgLayer.add(wallGroup);
+        var wallTR = new Konva.Rect({
+            x: 836,
+            y: 0,
+            width: 64,
+            height: 364,
+            visible: false,
+        });
+        var wallBR = new Konva.Rect({
+            x: 836,
+            y: 536,
+            width: 64,
+            height: 364,
+            visible: false,
+        });
+        var wallBL = new Konva.Rect({
+            width: 64,
+            height: 364,
+            x: 0,
+            y: 536,
+            visible: false,
+        });
+        var wallTL = new Konva.Rect({
+            width: 64,
+            height: 364,
+            x: 0,
+            y: 0,
+            visible: false,
+        });
+        wallGroup.add(wallBR, wallBL, wallTL, wallTR);
+
+        var player1 = new Konva.Group({
+            offsetX: 62,
+            offsetY: 62,
+            width: 126,
+            height: 126,
+            x: 71,
+            y: 450,
+        });
+        playerLayer.add(player1);
+        var p1Brush = new Konva.Star({
+            innerRadius: 1,
+            x: 105,
+            y: 105,
+            width: 42,
+            height: 42,
+            strokeWidth: 2,
+            stroke: 'black',
+        });
+        player1.add(p1Brush);
+        Konva.Image.fromURL('https://NOAVGC.github.io/konva/RoombotRumble/assets/images/playerWhite.svg', (playerWhiteImage) => {
+            player1.add(playerWhiteImage);
+            playerWhiteImage.setAttrs({
+                width: 124,
+                height: 124,
+                x: 0,
+                y: 0,
+            })
+        });
+        var p1powerCellGroup = new Konva.Group({
+            x: 24,
+            y: 41,
+            width: 25,
+            height: 42,
+        });
+        var p1powerCell1 = new Konva.Rect({
+            width: 25,
+            height: 14,
+            x: 0,
+            y: 0,
+            fill: 'green',
+            visible: false,
+        });
+        var p1powerCell2 = new Konva.Rect({
+            width: 25,
+            height: 14,
+            x: 0,
+            y: 14,
+            fill: 'green',
+            visible: false,
+        });
+        var p1powerCell3 = new Konva.Rect({
+            width: 25,
+            height: 14,
+            x: 0,
+            y: 28,
+            fill: 'green',
+            visible: false,
+        });
+        p1powerCellGroup.add(p1powerCell1, p1powerCell2, p1powerCell3);
+        player1.add(p1powerCellGroup);
+
+        var player2 = new Konva.Group({
+            offsetX: 62,
+            offsetY: 62,
+            width: 126,
+            height: 126,
+            x: 829,
+            y: 450,
+        });
+        playerLayer.add(player2);
+        var p2Brush = new Konva.Star({
+            innerRadius: 1,
+            x: 105,
+            y: 105,
+            width: 42,
+            height: 42,
+            strokeWidth: 2,
+            stroke: 'black',
+        });
+        player2.add(p2Brush);
+        Konva.Image.fromURL('https://NOAVGC.github.io/konva/RoombotRumble/assets/images/playerblack.svg', (playerBlackImage) => {
+            player2.add(playerBlackImage);
+            playerBlackImage.setAttrs({
+                width: 124,
+                height: 124,
+                x: 0,
+                y: 0,
+            });
+
+        });
+        var p2powerCellGroup = new Konva.Group({
+            x: 24,
+            y: 41,
+            width: 25,
+            height: 42,
+        });
+        var p2powerCell1 = new Konva.Rect({
+            width: 25,
+            height: 14,
+            x: 0,
+            y: 0,
+            fill: 'green',
+            visible: false,
+        });
+        var p2powerCell2 = new Konva.Rect({
+            width: 25,
+            height: 14,
+            x: 0,
+            y: 14,
+            fill: 'green',
+            visible: false,
+        });
+        var p2powerCell3 = new Konva.Rect({
+            width: 25,
+            height: 14,
+            x: 0,
+            y: 28,
+            fill: 'green',
+            visible: false,
+        });
+        p2powerCellGroup.add(p2powerCell1, p2powerCell2, p2powerCell3);
+        player2.add(p2powerCellGroup);
+        player2.rotation(180);
+
+        var angularSpeed = 540;
+        var brushAnimation = new Konva.Animation(function (frame) {
+            var angleDiff = (frame.timeDiff * angularSpeed) / 1000;
+            p1Brush.rotate(-angleDiff);
+            p2Brush.rotate(-angleDiff);
+        }, playerLayer);
+
+        var homeBaseLayer = new Konva.Layer();
+        Konva.Image.fromURL('https://NOAVGC.github.io/konva/RoombotRumble/assets/images/baseWhite.svg', (baseWhiteImage) => {
+            homeBaseLayer.add(baseWhiteImage);
+            baseWhiteImage.setAttrs({
+                width: 92,
+                height: 172,
+                x: 0,
+                y: 364,
+            })
+        });
+        Konva.Image.fromURL('https://NOAVGC.github.io/konva/RoombotRumble/assets/images/baseBlack.svg', (baseBlackImage) => {
+            homeBaseLayer.add(baseBlackImage);
+            baseBlackImage.setAttrs({
+                width: 92,
+                height: 172,
+                offsetX: 46,
+                offsetY: 86,
+                x: 856,
+                y: 450,
+                rotation: 180
+            })
+        });
+        stage.add(homeBaseLayer);
+
+        var HUD = new Konva.Layer();
+        stage.add(HUD);
+        HUD.add(new Konva.Text({
+            text: 'Player 1 Score:',
+            fontFamily: 'Verdana',
+            fontStyle: 'bold',
+            fontSize: 31,
+            fill: '#3CFF27',
+            x: 920,
+            y: 15,
+        }));
+        var p1ScoreText = new Konva.Text({
+            text: '0',
+            fontFamily: 'Verdana',
+            fontStyle: 'bold',
+            fontSize: 73,
+            fill: '#3CFF27',
+            x: 920,
+            y: 63,
+        });
+        HUD.add(p1ScoreText);
+        HUD.add(new Konva.Text({
+            text: 'Player 2 Score:',
+            fontFamily: 'Verdana',
+            fontStyle: 'bold',
+            fontSize: 31,
+            fill: '#3CFF27',
+            x: 920,
+            y: 198,
+        }));
+        var p2ScoreText = new Konva.Text({
+            text: '0',
+            fontFamily: 'Verdana',
+            fontStyle: 'bold',
+            fontSize: 73,
+            fill: '#3CFF27',
+            x: 920,
+            y: 246,
+        });
+        HUD.add(p2ScoreText);
+        HUD.add(new Konva.Text({
+            text: 'Time Left:',
+            fontFamily: 'Verdana',
+            fontStyle: 'bold',
+            fontSize: 31,
+            fill: '#3CFF27',
+            x: 964,
+            y: 381,
+        }));
+        var timeText = new Konva.Text({
+            text: '0',
+            fontFamily: 'Verdana',
+            fontStyle: 'bold',
+            fontSize: 73,
+            fill: '#3CFF27',
+            x: 971,
+            y: 429,
+        });
+        HUD.add(timeText);
+        var startButton = new Konva.Group({
+            x: 923,
+            y: 542,
+            width: 254,
+            height: 94,
+        });
+        HUD.add(startButton);
+        startButton.add(new Konva.Rect({
+            width: 254,
+            height: 94,
+            cornerRadius: 13,
+            fillRadialGradientStartPoint: { x: 127, y: 47 },
+            fillRadialGradientStartRadius: 0,
+            fillRadialGradientEndPoint: { x: 127, y: 47 },
+            fillRadialGradientEndRadius: 70,
+            fillRadialGradientColorStops: [0, '#D1D3D4', 1, '#6D6E71'],
+        }));
+        startButton.add(
+            new Konva.Text({
+                x: 45,
+                y: 21,
+                text: 'Start',
+                fontFamily: 'Verdana',
+                fontStyle: 'bold',
+                fontSize: 60,
+                fill: 'black',
+            })
+        );
+        startButton.on('click', start);
+        var endButton = new Konva.Group({
+            x: 923,
+            y: 661,
+            width: 254,
+            height: 94,
+        });
+        HUD.add(endButton);
+        endButton.add(new Konva.Rect({
+            width: 254,
+            height: 94,
+            cornerRadius: 13,
+            fillRadialGradientStartPoint: { x: 127, y: 47 },
+            fillRadialGradientStartRadius: 0,
+            fillRadialGradientEndPoint: { x: 127, y: 47 },
+            fillRadialGradientEndRadius: 70,
+            fillRadialGradientColorStops: [0, '#D1D3D4', 1, '#6D6E71'],
+        }));
+        endButton.add(
+            new Konva.Text({
+                x: 67,
+                y: 21,
+                text: 'End',
+                fontFamily: 'Verdana',
+                fontStyle: 'bold',
+                fontSize: 60,
+                fill: 'black',
+            })
+        );
+        endButton.on('click', stopGame);
+        var infoButton = new Konva.Group({
+            x: 923,
+            y: 780,
+            width: 254,
+            height: 94,
+        });
+        HUD.add(infoButton);
+        infoButton.add(new Konva.Rect({
+            width: 254,
+            height: 94,
+            cornerRadius: 13,
+            fillRadialGradientStartPoint: { x: 127, y: 47 },
+            fillRadialGradientStartRadius: 0,
+            fillRadialGradientEndPoint: { x: 127, y: 47 },
+            fillRadialGradientEndRadius: 70,
+            fillRadialGradientColorStops: [0, '#D1D3D4', 1, '#6D6E71'],
+        }));
+        infoButton.add(
+            new Konva.Text({
+                x: 58,
+                y: 21,
+                text: 'Info',
+                fontFamily: 'Verdana',
+                fontStyle: 'bold',
+                fontSize: 60,
+                fill: 'black',
+            })
+        );
+        var winnerBox = new Konva.Group({
+            x: 69,
+            y: 368,
+            width: 769,
+            height: 164,
+            visible: false,
+        });
+        HUD.add(winnerBox);
+        winnerBox.add(new Konva.Rect({
+            width: 769,
+            height: 164,
+            fill: 'black',
+        }));
+        winnerText = new Konva.Text({
+            fontFamily: 'Verdana',
+            fontStyle: 'bold',
+            fontSize: 87,
+            fill: '#3CFF27',
+            y: 46,
+        });
+        winnerBox.add(winnerText);
+        //infoButton.on('click', showInfo);
+
+        var topMenu = new Konva.Layer();
+        stage.add(topMenu);
+        Konva.Image.fromURL('https://NOAVGC.github.io/konva/RoombotRumble/assets/images/titleScreen.svg', (titlescreen) => {
+            topMenu.add(titlescreen);
+            titlescreen.setAttrs({
+                width: 1200,
+                height: 900,
+                x: 0,
+                y: 0,
+                hitFunc: function (context) {
+                    context.rect(287, 608, 626, 162)
+                    context.fillStrokeShape(this);
+                },
+            })
+        });
+        topMenu.on('click', showGame);
+
+        class playerManager {
+            constructor(playerID, playerGroup, playerPowerCellGroup) {
+                this.id = playerID;
+                this.speed = 2;
+                this.bin = [];
+                this.score = 0;
+                this.group = playerGroup;
+                this.cells = playerPowerCellGroup;
+            }
+        }
+
+        const baseSpeed = 2;
+        const baseRotateSpeed = 1;
+        const p1 = new playerManager(1, player1, p1powerCellGroup);
+        const p2 = new playerManager(2, player2, p2powerCellGroup);
+        var currentFrame = 1;
+        var timeRemaining = 180;
+        var running = false;
+        var soundOn = true;
+        var neverRun = true;
+        var gameInterval;
+        var infoUp = false;
+
+        const controller = {
+            87: { pressed: false, func: p1MoveForward },
+            83: { pressed: false, func: p1MoveBackward },
+            65: { pressed: false, func: p1SpinLeft },
+            68: { pressed: false, func: p1SpinRight },
+            38: { pressed: false, func: p2MoveForward },
+            40: { pressed: false, func: p2MoveBackward },
+            37: { pressed: false, func: p2SpinLeft },
+            39: { pressed: false, func: p2SpinRight },
+            86: { pressed: false, func: soundToggle },
+        }
+        window.addEventListener("keydown", (e) => {
+            if (controller[e.keyCode]) {
+                controller[e.keyCode].pressed = true
+            }
+        })
+        window.addEventListener("keyup", (e) => {
+            if (controller[e.keyCode]) {
+                controller[e.keyCode].pressed = false
+            }
+        })
+
+        function showGame() {
+            bonk.volume = 0.0;
+            bonk.play();
+            bonk.volume = 1.0;
+            timeUp.volume = 0.0;
+            timeUp.play();
+            timeUp.volume = 1.0;
+            topMenu.remove();
+            p1powerCellGroup.moveToTop();
+            p2powerCellGroup.moveToTop();
+            //add text here
+        }
+
+        function start() {
+            if (!running && !infoUp) {
+                if (!neverRun) {
+                    resetSettings();
+                }
+                //if bgm music added, bgm.start();
+                neverRun = false;
+                running = true;
+                brushAnimation.start();
+                p1ScoreText.text(`${p1.score}`);
+                p2ScoreText.text(`${p2.score}`);
+                timeText.text(`${timeRemaining}`);
+                createNewGarbage();
+                gameInterval = setInterval(updateGameArea, 16.6666);
+            }
+        }
+
+        function updateGameArea() {
+            if (p1.bin.length < 3) {
+                checkGarbageCollision(p1);
+            }
+            if (p2.bin.length < 3) {
+                checkGarbageCollision(p2);
+            }
+            if (p1.bin.length > 0 && p1.group.x() <= 78) {
+                emptyBin(p1, p1ScoreText);
+            }
+            if (p2.bin.length > 0 && p2.group.x() >= 822) {
+                emptyBin(p2, p2ScoreText);
+            }
+            executeMoves();
+            if (currentFrame % 60 == 0 && (garbageLayer.getChildren().length + p1.bin.length + p2.bin.length < 7)) {
+                createNewGarbage();
+            }
+            if (currentFrame % 60 == 0) {
+                timeRemaining--;
+                if (timeRemaining <= 10) {
+                    timeText.fill('#F93030');
+                }
+                if (timeRemaining <= 10 && timeRemaining > 0) {
+                    //play warning sound here
+                }
+                timeText.text(`${timeRemaining}`);
+            }
+            currentFrame++;
+            if (timeRemaining == 0) {
+                stopGame();
+            }
+        }
+
+        const executeMoves = () => {
+            Object.keys(controller).forEach(key => {
+                controller[key].pressed && controller[key].func()
+            })
+        }
+
+        function p1MoveForward() {
+            let currX = p1.group.x();
+            let currY = p1.group.y();
+            p1.group.x(p1.group.x() + p1.speed * Math.cos(p1.group.rotation() * Math.PI / 180));
+            p1.group.y(p1.group.y() + p1.speed * Math.sin(p1.group.rotation() * Math.PI / 180));
+            if (checkCollisions(p1, p2, p1)) {
+                if (soundOn && bonk.ended) {
+                    bonk.play();
+                }
+                p1.group.x(currX);
+                p1.group.y(currY);
+            }
+            if (p1.group.y() < 126) {
+                if (soundOn && bonk.ended) {
+                    bonk.play();
+                }
+                p1.group.y(126);
+            }
+            if (p1.group.y() > 772) {
+                if (soundOn && bonk.ended) {
+                    bonk.play();
+                }
+                p1.group.y(772);
+            }
+            if (p1.group.x() < 62) {
+                if (soundOn && bonk.ended) {
+                    bonk.play();
+                }
+                p1.group.x(62);
+            }
+            if (p1.group.x() > 838) {
+                if (soundOn && bonk.ended) {
+                    bonk.play();
+                }
+                p1.group.x(838);
+            }
+        }
+
+        function p1MoveBackward() {
+            let currX = p1.group.x();
+            let currY = p1.group.y();
+            p1.group.x(p1.group.x() - p1.speed * Math.cos(p1.group.rotation() * Math.PI / 180));
+            p1.group.y(p1.group.y() - p1.speed * Math.sin(p1.group.rotation() * Math.PI / 180));
+            if (checkCollisions(p1, p2, p1)) {
+                if (soundOn && bonk.ended) {
+                    bonk.play();
+                }
+                p1.group.x(currX);
+                p1.group.y(currY);
+            }
+            if (p1.group.y() < 126) {
+                if (soundOn && bonk.ended) {
+                    bonk.play();
+                }
+                p1.group.y(126);
+            }
+            if (p1.group.y() > 772) {
+                if (soundOn && bonk.ended) {
+                    bonk.play();
+                }
+                p1.group.y(772);
+            }
+            if (p1.group.x() < 62) {
+                if (soundOn && bonk.ended) {
+                    bonk.play();
+                }
+                p1.group.x(62);
+            }
+            if (p1.group.x() > 838) {
+                if (soundOn && bonk.ended) {
+                    bonk.play();
+                }
+                p1.group.x(838);
+            }
+        }
+
+        function p1SpinLeft() {
+            p1.group.rotation(p1.group.rotation() - p1.speed);
+        }
+
+        function p1SpinRight() {
+            p1.group.rotation(p1.group.rotation() + p1.speed);
+        }
+
+        function p2MoveForward() {
+            let currX = p2.group.x();
+            let currY = p2.group.y();
+            p2.group.x(p2.group.x() + p2.speed * Math.cos(p2.group.rotation() * Math.PI / 180));
+            p2.group.y(p2.group.y() + p2.speed * Math.sin(p2.group.rotation() * Math.PI / 180));
+            if (checkCollisions(p1, p2, p2)) {
+                if (soundOn && bonk.ended) {
+                    bonk.play();
+                }
+                p2.group.x(currX);
+                p2.group.y(currY);
+            }
+            if (p2.group.y() < 126) {
+                if (soundOn && bonk.ended) {
+                    bonk.play();
+                }
+                p2.group.y(126);
+            }
+            if (p2.group.y() > 772) {
+                if (soundOn && bonk.ended) {
+                    bonk.play();
+                }
+                p2.group.y(772);
+            }
+            if (p2.group.x() < 62) {
+                if (soundOn && bonk.ended) {
+                    bonk.play();
+                }
+                p2.group.x(62);
+            }
+            if (p2.group.x() > 838) {
+                if (soundOn && bonk.ended) {
+                    bonk.play();
+                }
+                p2.group.x(838);
+            }
+        }
+
+        function p2MoveBackward() {
+            let currX = p2.group.x();
+            let currY = p2.group.y();
+            p2.group.x(p2.group.x() - p2.speed * Math.cos(p2.group.rotation() * Math.PI / 180));
+            p2.group.y(p2.group.y() - p2.speed * Math.sin(p2.group.rotation() * Math.PI / 180));
+            if (checkCollisions(p1, p2, p2)) {
+                if (soundOn && bonk.ended) {
+                    bonk.play();
+                }
+                p2.group.x(currX);
+                p2.group.y(currY);
+            }
+            if (p2.group.y() < 126) {
+                if (soundOn && bonk.ended) {
+                    bonk.play();
+                }
+                p2.group.y(126);
+            }
+            if (p2.group.y() > 772) {
+                if (soundOn && bonk.ended) {
+                    bonk.play();
+                }
+                p2.group.y(772);
+            }
+            if (p2.group.x() < 62) {
+                if (soundOn && bonk.ended) {
+                    bonk.play();
+                }
+                p2.group.x(62);
+            }
+            if (p2.group.x() > 838) {
+                if (soundOn && bonk.ended) {
+                    bonk.play();
+                }
+                p2.group.x(838);
+            }
+        }
+
+        function p2SpinLeft() {
+            p2.group.rotation(p2.group.rotation() - p2.speed);
+        }
+
+        function p2SpinRight() {
+            p2.group.rotation(p2.group.rotation() + p2.speed);
+        }
+
+        function checkCollisions(player1, player2, playerToCheck) {
+            if (Math.pow(player1.group.x() - player2.group.x(), 2) + Math.pow(player1.group.y() - player2.group.y(), 2) < 15376) {
+                return true;
+            }
+            return checkAllWalls(playerToCheck);
+        }
+
+        function checkAllWalls(player) {
+            var theWalls = wallGroup.getChildren();
+            var pcx = player.group.x();
+            var pcy = player.group.y();
+            for (i = 0; i < theWalls.length; i++) {
+                var wcentX = theWalls[i].x() + theWalls[i].width() / 2;
+                var wcentY = theWalls[i].y() + theWalls[i].height() / 2;
+                var distX = Math.abs(pcx - wcentX);
+                var distY = Math.abs(pcy - wcentY);
+                if (distX > (theWalls[i].width() / 2 + 62)) {
+                    continue;
+                }
+                if (distY > (theWalls[i].height() / 2 + 62)) {
+                    continue;
+                }
+                if (distX <= (theWalls[i].width() / 2)) {
+                    return true;
+                }
+                if (distY <= (theWalls[i].height() / 2)) {
+                    return true;
+                }
+                var cornDistSq = Math.pow(distX - theWalls[i].width() / 2, 2) + Math.pow(distY - theWalls[i].height() / 2, 2);
+                if (cornDistSq <= 3844) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function checkGarbageCollision(player) {
+            //run through children of garbage layer and check against collision with player
+            let currentGarbage = garbageLayer.getChildren();
+            for (j = 0; j < currentGarbage.length; j++) {
+                if ((Math.pow(player.group.x() - currentGarbage[j].x(), 2) + Math.pow(player.group.y() - currentGarbage[j].y(), 2)) < 3364) {
+                    collectGarbage(player, currentGarbage[j]);
+                    break;
+                }
+            }
+        }
+
+        function collectGarbage(player, garbage) {
+            if (soundOn) {
+                paper.play();
+            }
+            player.bin.push(garbage.name());
+            player.speed = player.speed * ((100 - (10 * player.bin.length)) / 100);
+            player.cells.getChildren()[player.bin.length - 1].visible(true);
+            garbage.destroy();
+        }
+
+        function emptyBin(player, scoreText) {
+            //play a quick vacuum sound here
+            for (k = 0; k < player.bin.length; k++) {
+                player.score += (Math.pow(2, k) * 100 + (Math.pow(2, k) * 100 * (player.bin[k] == 'g')));
+                player.cells.getChildren()[k].visible(false);
+            }
+            scoreText.text(`${player.score}`);
+            while (player.bin.length > 0) {
+                player.bin.pop();
+            }
+            player.speed = baseSpeed;
+        }
+
+        function createNewGarbage() {
+            //create new image of garbage size 34x34, offset at 17x17, position randomized along length of layer and height of layer from 0-626, 5% chance to be gold, add to garbage layer
+            let xPos = Math.floor(Math.random() * 627) + 137;
+            let yPos = Math.floor(Math.random() * 627) + 137;
+            let rot = Math.floor(Math.random() * 360);
+            let goldChance = Math.floor(Math.random() * 100) + 1;
+            let src = (goldChance <= 10) ? 'https://NOAVGC.github.io/konva/RoombotRumble/assets/images/trashGold.svg' : 'https://NOAVGC.github.io/konva/RoombotRumble/assets/images/trashWhite.svg';
+            let tName = (goldChance <= 10) ? 'g' : 'w';
+            Konva.Image.fromURL(src, (trashImage) => {
+                garbageLayer.add(trashImage);
+                trashImage.setAttrs({
+                    width: 34,
+                    height: 34,
+                    offsetX: 17,
+                    offsetY: 17,
+                    x: xPos,
+                    y: yPos,
+                    rotation: rot,
+                    name: tName,
+                })
+            });
+        }
+
+        function soundToggle() {
+            if (running) {
+                //soundOn?bgm.pause():bgm.play();
+            }
+            soundOn = !soundOn;
+        }
+
+        function stopGame() {
+            if (running) {
+                if (soundOn) {
+                    //bgm.pause();
+                    timeUp.play();
+                }
+                running = false;
+                brushAnimation.stop();
+                clearInterval(gameInterval);
+                //code to check scores and display winner
+                let winnerName = '';
+                let posX;
+                if (p1.score == p2.score) {
+                    winnerName = 'No Winners!';
+                    posX = 94;
+                } else {
+                    winnerName = p1.score > p2.score ? 'Player 1 Wins!' : 'Player 2 Wins!';
+                    posX = 37;
+                }
+                winnerText.setAttrs({
+                    x: posX,
+                    text: winnerName,
+                });
+                winnerBox.visible(true);
+                //send to winner text label and add text to HUD layer
+            }
+        }
+
+        function resetSettings() {
+            p1.group.setAttrs({
+                x: 71,
+                y: 450,
+                rotation: 0,
+            });
+            p2.group.setAttrs({
+                x: 829,
+                y: 450,
+                rotation: 180,
+            });
+            garbageLayer.destroyChildren();
+            for (i = 0; i < p1.bin.length; i++) {
+                p1.cells.getChildren()[i].visible(false);
+            }
+            for (j = 0; j < p2.bin.length; i++) {
+                p2.cells.getChildren()[i].visible(false);
+            }
+            p1.bin = [];
+            p2.bin = [];
+            p1.score = 0;
+            p2.score = 0;
+            currentFrame = 1;
+            timeRemaining = 180;
+            timeText.fill('#3CFF27');
+            p1.speed = baseSpeed;
+            p2.speed = baseSpeed;
+            running = false;
+            winnerBox.visible(false);
+            //if background music is added, bgm.pause(), bgm.currentTime= 0
+            //restore starting values and restart game, including player positions and rotations etc, clear garbage layer
+        }
+
+        /*Things to do:
+        find BGM
+        make instructions screen
+        may have trouble with bonk sound if ended isn't returned as true if never played
+        If time:
+        Allow setting time limit
+        */
+
+    </script>
+
+</body>
+
+</html>
