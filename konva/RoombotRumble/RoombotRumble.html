@@ -28,10 +28,15 @@
             height: stageHeight,
         });
         bonk = new Audio('assets/sounds/bonk.ogg');
-
         paper = new Audio('assets/sounds/paper.mp3');
+        suction = new Audio('assets/sounds/suction.mp3')
         timeUp = new Audio('assets/sounds/timeUp.mp3');
         timeUp.preload = "auto";
+        bgmSource1 = 'assets/sounds/bgm1.mp3'
+        bgm = new Audio(bgmSource1);
+        bgm.preload = "auto";
+        warning = new Audio('assets/sounds/warning.mp3');
+        warning.preload = "auto";
         // import the background image
         var bgLayer = new Konva.Layer();
         stage.add(bgLayer);
@@ -434,18 +439,21 @@
 
         const baseSpeed = 2;
         const baseRotateSpeed = 1;
+        const defaultTime = 180;
         const p1 = new playerManager(1, player1, p1powerCellGroup);
         const p2 = new playerManager(2, player2, p2powerCellGroup);
         var currentFrame = 1;
-        var timeRemaining = 180;
-        var running = false;
+        var timeRemaining = defaultTime;
+        var gameOver = true;
         var soundOn = true;
+        var musicOn = true;
         var neverRun = true;
         var gameInterval;
         var infoUp = false;
+        var lastTime = 0;
 
         const controller = {
-            87: { pressed: false, func: p1MoveForward },
+            87: { pressed: false, func: () => { p1MoveForward(p1) } },
             83: { pressed: false, func: p1MoveBackward },
             65: { pressed: false, func: p1SpinLeft },
             68: { pressed: false, func: p1SpinRight },
@@ -467,26 +475,25 @@
         })
 
         function showGame() {
-            bonk.volume = 0.0;
-            bonk.play();
-            bonk.volume = 1.0;
-            timeUp.volume = 0.0;
-            timeUp.play();
-            timeUp.volume = 1.0;
             topMenu.remove();
             p1powerCellGroup.moveToTop();
             p2powerCellGroup.moveToTop();
-            //add text here
+            bonk.volume = 0.0;
+            bonk.play();
         }
 
         function start() {
-            if (!running && !infoUp) {
+            if (gameOver && !infoUp) {
                 if (!neverRun) {
                     resetSettings();
+                } else {
+                    bonk.volume = 1.0;
                 }
-                //if bgm music added, bgm.start();
+                if (musicOn) {
+                    bgm.play();
+                }
                 neverRun = false;
-                running = true;
+                gameOver = false;
                 brushAnimation.start();
                 p1ScoreText.text(`${p1.score}`);
                 p2ScoreText.text(`${p2.score}`);
@@ -510,7 +517,7 @@
                 emptyBin(p2, p2ScoreText);
             }
             executeMoves();
-            if (currentFrame % 60 == 0 && (garbageLayer.getChildren().length + p1.bin.length + p2.bin.length < 7)) {
+            if (currentFrame % 180 == 0 && (garbageLayer.getChildren().length + p1.bin.length + p2.bin.length < 7)) {
                 createNewGarbage();
             }
             if (currentFrame % 60 == 0) {
@@ -518,8 +525,8 @@
                 if (timeRemaining <= 10) {
                     timeText.fill('#F93030');
                 }
-                if (timeRemaining <= 10 && timeRemaining > 0) {
-                    //play warning sound here
+                if (timeRemaining <= 10 && timeRemaining > 0 && soundOn) {
+                    warning.play();
                 }
                 timeText.text(`${timeRemaining}`);
             }
@@ -535,41 +542,17 @@
             })
         }
 
-        function p1MoveForward() {
-            let currX = p1.group.x();
-            let currY = p1.group.y();
-            p1.group.x(p1.group.x() + p1.speed * Math.cos(p1.group.rotation() * Math.PI / 180));
-            p1.group.y(p1.group.y() + p1.speed * Math.sin(p1.group.rotation() * Math.PI / 180));
-            if (checkCollisions(p1, p2, p1)) {
+        function p1MoveForward(player) {
+            let currX = player.group.x();
+            let currY = player.group.y();
+            player.group.x(player.group.x() + player.speed * Math.cos(player.group.rotation() * Math.PI / 180));
+            player.group.y(player.group.y() + player.speed * Math.sin(player.group.rotation() * Math.PI / 180));
+            if (checkCollisions(player)) {
                 if (soundOn && bonk.ended) {
                     bonk.play();
                 }
-                p1.group.x(currX);
-                p1.group.y(currY);
-            }
-            if (p1.group.y() < 126) {
-                if (soundOn && bonk.ended) {
-                    bonk.play();
-                }
-                p1.group.y(126);
-            }
-            if (p1.group.y() > 772) {
-                if (soundOn && bonk.ended) {
-                    bonk.play();
-                }
-                p1.group.y(772);
-            }
-            if (p1.group.x() < 62) {
-                if (soundOn && bonk.ended) {
-                    bonk.play();
-                }
-                p1.group.x(62);
-            }
-            if (p1.group.x() > 838) {
-                if (soundOn && bonk.ended) {
-                    bonk.play();
-                }
-                p1.group.x(838);
+                player.group.x(currX);
+                player.group.y(currY);
             }
         }
 
@@ -578,36 +561,12 @@
             let currY = p1.group.y();
             p1.group.x(p1.group.x() - p1.speed * Math.cos(p1.group.rotation() * Math.PI / 180));
             p1.group.y(p1.group.y() - p1.speed * Math.sin(p1.group.rotation() * Math.PI / 180));
-            if (checkCollisions(p1, p2, p1)) {
+            if (checkCollisions(p1)) {
                 if (soundOn && bonk.ended) {
                     bonk.play();
                 }
                 p1.group.x(currX);
                 p1.group.y(currY);
-            }
-            if (p1.group.y() < 126) {
-                if (soundOn && bonk.ended) {
-                    bonk.play();
-                }
-                p1.group.y(126);
-            }
-            if (p1.group.y() > 772) {
-                if (soundOn && bonk.ended) {
-                    bonk.play();
-                }
-                p1.group.y(772);
-            }
-            if (p1.group.x() < 62) {
-                if (soundOn && bonk.ended) {
-                    bonk.play();
-                }
-                p1.group.x(62);
-            }
-            if (p1.group.x() > 838) {
-                if (soundOn && bonk.ended) {
-                    bonk.play();
-                }
-                p1.group.x(838);
             }
         }
 
@@ -624,36 +583,12 @@
             let currY = p2.group.y();
             p2.group.x(p2.group.x() + p2.speed * Math.cos(p2.group.rotation() * Math.PI / 180));
             p2.group.y(p2.group.y() + p2.speed * Math.sin(p2.group.rotation() * Math.PI / 180));
-            if (checkCollisions(p1, p2, p2)) {
+            if (checkCollisions(p2)) {
                 if (soundOn && bonk.ended) {
                     bonk.play();
                 }
                 p2.group.x(currX);
                 p2.group.y(currY);
-            }
-            if (p2.group.y() < 126) {
-                if (soundOn && bonk.ended) {
-                    bonk.play();
-                }
-                p2.group.y(126);
-            }
-            if (p2.group.y() > 772) {
-                if (soundOn && bonk.ended) {
-                    bonk.play();
-                }
-                p2.group.y(772);
-            }
-            if (p2.group.x() < 62) {
-                if (soundOn && bonk.ended) {
-                    bonk.play();
-                }
-                p2.group.x(62);
-            }
-            if (p2.group.x() > 838) {
-                if (soundOn && bonk.ended) {
-                    bonk.play();
-                }
-                p2.group.x(838);
             }
         }
 
@@ -662,36 +597,12 @@
             let currY = p2.group.y();
             p2.group.x(p2.group.x() - p2.speed * Math.cos(p2.group.rotation() * Math.PI / 180));
             p2.group.y(p2.group.y() - p2.speed * Math.sin(p2.group.rotation() * Math.PI / 180));
-            if (checkCollisions(p1, p2, p2)) {
+            if (checkCollisions(p2)) {
                 if (soundOn && bonk.ended) {
                     bonk.play();
                 }
                 p2.group.x(currX);
                 p2.group.y(currY);
-            }
-            if (p2.group.y() < 126) {
-                if (soundOn && bonk.ended) {
-                    bonk.play();
-                }
-                p2.group.y(126);
-            }
-            if (p2.group.y() > 772) {
-                if (soundOn && bonk.ended) {
-                    bonk.play();
-                }
-                p2.group.y(772);
-            }
-            if (p2.group.x() < 62) {
-                if (soundOn && bonk.ended) {
-                    bonk.play();
-                }
-                p2.group.x(62);
-            }
-            if (p2.group.x() > 838) {
-                if (soundOn && bonk.ended) {
-                    bonk.play();
-                }
-                p2.group.x(838);
             }
         }
 
@@ -703,8 +614,10 @@
             p2.group.rotation(p2.group.rotation() + p2.speed);
         }
 
-        function checkCollisions(player1, player2, playerToCheck) {
-            if (Math.pow(player1.group.x() - player2.group.x(), 2) + Math.pow(player1.group.y() - player2.group.y(), 2) < 15376) {
+        function checkCollisions(playerToCheck) {
+            let xDist = p1.group.x() - p2.group.x();
+            let yDist = p1.group.y() - p2.group.y()
+            if (xDist * xDist + yDist * yDist < 15376) {
                 return true;
             }
             return checkAllWalls(playerToCheck);
@@ -731,10 +644,36 @@
                 if (distY <= (theWalls[i].height() / 2)) {
                     return true;
                 }
-                var cornDistSq = Math.pow(distX - theWalls[i].width() / 2, 2) + Math.pow(distY - theWalls[i].height() / 2, 2);
+                let x = distX - theWalls[i].width() / 2;
+                let y = distY - theWalls[i].height() / 2;
+                var cornDistSq = x * x + y * y;
                 if (cornDistSq <= 3844) {
                     return true;
                 }
+            }
+            if (player.group.y() < 126) {
+                if (soundOn && bonk.ended) {
+                    bonk.play();
+                }
+                player.group.y(126);
+            }
+            if (player.group.y() > 772) {
+                if (soundOn && bonk.ended) {
+                    bonk.play();
+                }
+                player.group.y(772);
+            }
+            if (player.group.x() < 62) {
+                if (soundOn && bonk.ended) {
+                    bonk.play();
+                }
+                player.group.x(62);
+            }
+            if (player.group.x() > 838) {
+                if (soundOn && bonk.ended) {
+                    bonk.play();
+                }
+                player.group.x(838);
             }
             return false;
         }
@@ -743,7 +682,9 @@
             //run through children of garbage layer and check against collision with player
             let currentGarbage = garbageLayer.getChildren();
             for (j = 0; j < currentGarbage.length; j++) {
-                if ((Math.pow(player.group.x() - currentGarbage[j].x(), 2) + Math.pow(player.group.y() - currentGarbage[j].y(), 2)) < 3364) {
+                let xDist = player.group.x() - currentGarbage[j].x();
+                let yDist = player.group.y() - currentGarbage[j].y();
+                if (xDist * xDist + yDist * yDist < 3364) {
                     collectGarbage(player, currentGarbage[j]);
                     break;
                 }
@@ -761,15 +702,16 @@
         }
 
         function emptyBin(player, scoreText) {
-            //play a quick vacuum sound here
+            if (soundOn) {
+                suction.play();
+            }
             for (k = 0; k < player.bin.length; k++) {
-                player.score += (Math.pow(2, k) * 100 + (Math.pow(2, k) * 100 * (player.bin[k] == 'g')));
+                let multiplier = Math.pow(2, k);
+                player.score += multiplier * 100 + multiplier * 100 * (player.bin[k] == 'g');
                 player.cells.getChildren()[k].visible(false);
             }
             scoreText.text(`${player.score}`);
-            while (player.bin.length > 0) {
-                player.bin.pop();
-            }
+            player.bin = [];
             player.speed = baseSpeed;
         }
 
@@ -796,20 +738,40 @@
             });
         }
 
-        function soundToggle() {
+        function soundToggle() { // This turns sound on and off when v key is pressed
+            var now = new Date().getTime();
+            if (now - lastTime < 500) {
+                return;
+            } else {
+                lastTime = now;
+            }
             if (running) {
-                //soundOn?bgm.pause():bgm.play();
+                soundOn ? bgm.pause() : bgm.play();
             }
             soundOn = !soundOn;
         }
 
-        function stopGame() {
+        function musicToggle() { // This turns music on and off when v key is pressed
+            var now = new Date().getTime();
+            if (now - lastTime < 500) {
+                return;
+            } else {
+                lastTime = now;
+            }
             if (running) {
+                musicOn ? bgm.pause() : bgm.play();
+            }
+            musicOn = !musicOn;
+        }
+
+
+        function stopGame() { // Ends game, stopping the music if it is playing.  Calculates winner and displays the result.
+            if (!gameOver) {
                 if (soundOn) {
-                    //bgm.pause();
+                    bgm.pause();
                     timeUp.play();
                 }
-                running = false;
+                gameOver = true;
                 brushAnimation.stop();
                 clearInterval(gameInterval);
                 //code to check scores and display winner
@@ -827,11 +789,10 @@
                     text: winnerName,
                 });
                 winnerBox.visible(true);
-                //send to winner text label and add text to HUD layer
             }
         }
 
-        function resetSettings() {
+        function resetSettings() { // Returns all game settings to default values
             p1.group.setAttrs({
                 x: 71,
                 y: 450,
@@ -854,20 +815,16 @@
             p1.score = 0;
             p2.score = 0;
             currentFrame = 1;
-            timeRemaining = 180;
+            timeRemaining = defaultTime;
             timeText.fill('#3CFF27');
             p1.speed = baseSpeed;
             p2.speed = baseSpeed;
-            running = false;
             winnerBox.visible(false);
-            //if background music is added, bgm.pause(), bgm.currentTime= 0
-            //restore starting values and restart game, including player positions and rotations etc, clear garbage layer
+            bgm.currentTime = 0
         }
 
         /*Things to do:
-        find BGM
         make instructions screen
-        may have trouble with bonk sound if ended isn't returned as true if never played
         If time:
         Allow setting time limit
         */
