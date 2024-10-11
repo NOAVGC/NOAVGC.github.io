@@ -450,17 +450,19 @@
         var neverRun = true;
         var gameInterval;
         var infoUp = false;
-        var lastTime = 0;
+        var lastTimeS = 0;
+        var lastTimeM = 0;
 
         const controller = {
-            87: { pressed: false, func: () => { p1MoveForward(p1) } },
-            83: { pressed: false, func: p1MoveBackward },
-            65: { pressed: false, func: p1SpinLeft },
-            68: { pressed: false, func: p1SpinRight },
-            38: { pressed: false, func: p2MoveForward },
-            40: { pressed: false, func: p2MoveBackward },
-            37: { pressed: false, func: p2SpinLeft },
-            39: { pressed: false, func: p2SpinRight },
+            87: { pressed: false, func: () => { moveForward(p1) } },
+            83: { pressed: false, func: () => { moveBackward(p1) } },
+            65: { pressed: false, func: () => { spinLeft(p1) } },
+            68: { pressed: false, func: () => { spinRight(p1) } },
+            38: { pressed: false, func: () => { moveForward(p2) } },
+            40: { pressed: false, func: () => { moveBackward(p2) } },
+            37: { pressed: false, func: () => { spinLeft(p2) } },
+            39: { pressed: false, func: () => { spinRight(p2) } },
+            77: { pressed: false, func: musicToggle },
             86: { pressed: false, func: soundToggle },
         }
         window.addEventListener("keydown", (e) => {
@@ -542,7 +544,7 @@
             })
         }
 
-        function p1MoveForward(player) {
+        function moveForward(player) {
             let currX = player.group.x();
             let currY = player.group.y();
             player.group.x(player.group.x() + player.speed * Math.cos(player.group.rotation() * Math.PI / 180));
@@ -556,62 +558,26 @@
             }
         }
 
-        function p1MoveBackward() {
-            let currX = p1.group.x();
-            let currY = p1.group.y();
-            p1.group.x(p1.group.x() - p1.speed * Math.cos(p1.group.rotation() * Math.PI / 180));
-            p1.group.y(p1.group.y() - p1.speed * Math.sin(p1.group.rotation() * Math.PI / 180));
-            if (checkCollisions(p1)) {
+        function moveBackward(player) {
+            let currX = player.group.x();
+            let currY = player.group.y();
+            player.group.x(player.group.x() - player.speed * Math.cos(player.group.rotation() * Math.PI / 180));
+            player.group.y(player.group.y() - player.speed * Math.sin(player.group.rotation() * Math.PI / 180));
+            if (checkCollisions(player)) {
                 if (soundOn && bonk.ended) {
                     bonk.play();
                 }
-                p1.group.x(currX);
-                p1.group.y(currY);
+                player.group.x(currX);
+                player.group.y(currY);
             }
         }
 
-        function p1SpinLeft() {
-            p1.group.rotation(p1.group.rotation() - p1.speed);
+        function spinLeft(player) {
+            player.group.rotation(player.group.rotation() - player.speed);
         }
 
-        function p1SpinRight() {
-            p1.group.rotation(p1.group.rotation() + p1.speed);
-        }
-
-        function p2MoveForward() {
-            let currX = p2.group.x();
-            let currY = p2.group.y();
-            p2.group.x(p2.group.x() + p2.speed * Math.cos(p2.group.rotation() * Math.PI / 180));
-            p2.group.y(p2.group.y() + p2.speed * Math.sin(p2.group.rotation() * Math.PI / 180));
-            if (checkCollisions(p2)) {
-                if (soundOn && bonk.ended) {
-                    bonk.play();
-                }
-                p2.group.x(currX);
-                p2.group.y(currY);
-            }
-        }
-
-        function p2MoveBackward() {
-            let currX = p2.group.x();
-            let currY = p2.group.y();
-            p2.group.x(p2.group.x() - p2.speed * Math.cos(p2.group.rotation() * Math.PI / 180));
-            p2.group.y(p2.group.y() - p2.speed * Math.sin(p2.group.rotation() * Math.PI / 180));
-            if (checkCollisions(p2)) {
-                if (soundOn && bonk.ended) {
-                    bonk.play();
-                }
-                p2.group.x(currX);
-                p2.group.y(currY);
-            }
-        }
-
-        function p2SpinLeft() {
-            p2.group.rotation(p2.group.rotation() - p2.speed);
-        }
-
-        function p2SpinRight() {
-            p2.group.rotation(p2.group.rotation() + p2.speed);
+        function spinRight(player) {
+            player.group.rotation(player.group.rotation() + player.speed);
         }
 
         function checkCollisions(playerToCheck) {
@@ -740,23 +706,20 @@
 
         function soundToggle() { // This turns sound on and off when v key is pressed
             var now = new Date().getTime();
-            if (now - lastTime < 500) {
+            if (now - lastTimeS < 500) {
                 return;
             } else {
-                lastTime = now;
-            }
-            if (running) {
-                soundOn ? bgm.pause() : bgm.play();
+                lastTimeS = now;
             }
             soundOn = !soundOn;
         }
 
         function musicToggle() { // This turns music on and off when v key is pressed
             var now = new Date().getTime();
-            if (now - lastTime < 500) {
+            if (now - lastTimeM < 500) {
                 return;
             } else {
-                lastTime = now;
+                lastTimeM = now;
             }
             if (running) {
                 musicOn ? bgm.pause() : bgm.play();
@@ -767,7 +730,7 @@
 
         function stopGame() { // Ends game, stopping the music if it is playing.  Calculates winner and displays the result.
             if (!gameOver) {
-                if (soundOn) {
+                if (musicOn) {
                     bgm.pause();
                     timeUp.play();
                 }
@@ -825,6 +788,7 @@
 
         /*Things to do:
         make instructions screen
+        I separated sound and music toggle.  Need to implement key.  Need to check correct boolean var used in all places. Maybe make single function that passes the proper boolean var?
         If time:
         Allow setting time limit
         */
