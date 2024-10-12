@@ -386,6 +386,22 @@
                 fill: 'black',
             })
         );
+        infoButton.on('click', showInfo);
+        var infoBox = new Konva.Group({
+            x: 64,
+            y: 179,
+            width: 772,
+            height: 541,
+            visible: false,
+        });
+        HUD.add(infoBox);
+        Konva.Image.fromURL('https://NOAVGC.github.io/konva/RoombotRumble/assets/images/infoBox.svg', (information) => {
+            infoBox.add(information);
+            information.setAttrs({
+                width: 772,
+                height: 541,
+            })
+        });
         var winnerBox = new Konva.Group({
             x: 69,
             y: 368,
@@ -618,28 +634,16 @@
                 }
             }
             if (player.group.y() < 126) {
-                if (soundOn && bonk.ended) {
-                    bonk.play();
-                }
-                player.group.y(126);
+                return true;
             }
             if (player.group.y() > 772) {
-                if (soundOn && bonk.ended) {
-                    bonk.play();
-                }
-                player.group.y(772);
+                return true;
             }
             if (player.group.x() < 62) {
-                if (soundOn && bonk.ended) {
-                    bonk.play();
-                }
-                player.group.x(62);
+                return true;
             }
             if (player.group.x() > 838) {
-                if (soundOn && bonk.ended) {
-                    bonk.play();
-                }
-                player.group.x(838);
+                return true;
             }
             return false;
         }
@@ -704,6 +708,11 @@
             });
         }
 
+        function showInfo() {
+            infoUp ? infoBox.visible(false) : infoBox.visible(true);
+            infoUp = !infoUp;
+        }
+
         function soundToggle() { // This turns sound on and off when v key is pressed
             var now = new Date().getTime();
             if (now - lastTimeS < 500) {
@@ -721,7 +730,7 @@
             } else {
                 lastTimeM = now;
             }
-            if (running) {
+            if (!gameOver) {
                 musicOn ? bgm.pause() : bgm.play();
             }
             musicOn = !musicOn;
@@ -732,6 +741,8 @@
             if (!gameOver) {
                 if (musicOn) {
                     bgm.pause();
+                }
+                if (soundOn) {
                     timeUp.play();
                 }
                 gameOver = true;
@@ -770,8 +781,8 @@
             for (i = 0; i < p1.bin.length; i++) {
                 p1.cells.getChildren()[i].visible(false);
             }
-            for (j = 0; j < p2.bin.length; i++) {
-                p2.cells.getChildren()[i].visible(false);
+            for (j = 0; j < p2.bin.length; j++) {
+                p2.cells.getChildren()[j].visible(false);
             }
             p1.bin = [];
             p2.bin = [];
