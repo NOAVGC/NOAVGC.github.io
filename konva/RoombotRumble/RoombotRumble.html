@@ -709,8 +709,10 @@
         }
 
         function showInfo() {
-            infoUp ? infoBox.visible(false) : infoBox.visible(true);
-            infoUp = !infoUp;
+            if (gameOver) {
+                infoUp ? infoBox.visible(false) : infoBox.visible(true);
+                infoUp = !infoUp;
+            }
         }
 
         function soundToggle() { // This turns sound on and off when v key is pressed
@@ -796,6 +798,13 @@
             winnerBox.visible(false);
             bgm.currentTime = 0
         }
+
+        /*Things to do:
+        make instructions screen
+        I separated sound and music toggle.  Need to implement key.  Need to check correct boolean var used in all places. Maybe make single function that passes the proper boolean var?
+        If time:
+        Allow setting time limit
+        */
 
     </script>
 
