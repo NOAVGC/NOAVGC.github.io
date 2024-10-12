@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Text" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 772 541">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #231f20;
+      }
+
+      .cls-2 {
+        font-size: 32px;
+      }
+
+      .cls-3 {
+        font-size: 25px;
+      }
+
+      .cls-4 {
+        fill: #76c043;
+        font-family: Verdana-Bold, Verdana;
+        font-weight: 700;
+      }
+    </style>
+  </defs>
+  <rect class="cls-1" width="772" height="541"/>
+  <text class="cls-4" transform="translate(9 33.32)"><tspan class="cls-2"><tspan x="0" y="0">How to Play:</tspan></tspan><tspan class="cls-3"><tspan x="0" y="30">Get the highest score by gathering more trash than </tspan></tspan><tspan class="cls-3"><tspan x="0" y="60">your opponent. You can hold up to three pieces of </tspan></tspan><tspan class="cls-3"><tspan x="0" y="90">garbage at once, but you will slow down the more </tspan></tspan><tspan class="cls-3"><tspan x="0" y="120">you are carrying. Once you are ready, empty your </tspan></tspan><tspan class="cls-3"><tspan x="0" y="150">dust bin at your home base. Each piece of trash is </tspan></tspan><tspan class="cls-3"><tspan x="0" y="180">worth 100 points, but you will receive a 2x multiplier </tspan></tspan><tspan class="cls-3"><tspan x="0" y="210">for each additional you are carrying when you empty </tspan></tspan><tspan class="cls-3"><tspan x="0" y="240">out. Gold garbage is worth double in that point slot!</tspan></tspan><tspan class="cls-2"><tspan x="0" y="310.8">Controls:</tspan></tspan><tspan class="cls-3"><tspan x="0" y="340.8">W/S: Move player 1 forward/backwards</tspan></tspan><tspan class="cls-3"><tspan x="0" y="370.8">A/D: Rotate player 1 left/right</tspan></tspan><tspan class="cls-3"><tspan x="0" y="400.8">Up/Down Arrow: Move player 2 forwards/backwards</tspan></tspan><tspan class="cls-3"><tspan x="0" y="430.8">Left/Right Arrow: Move player 2 left/right</tspan></tspan><tspan class="cls-3"><tspan x="0" y="460.8">V: Toggle sound effects on/off</tspan></tspan><tspan class="cls-3"><tspan x="0" y="490.8">M: Toggle music</tspan></tspan></text>
+</svg>
