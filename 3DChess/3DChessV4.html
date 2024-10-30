@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Babylon.js Chessboard with STL Export</title>
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+    <script src="https://cdn.babylonjs.com/loaders/babylon.glTF2FileLoader.min.js"></script>
+    <script src="https://cdn.babylonjs.com/serializers/babylon.glTF2Serializer.min.js"></script>
+    <script src="https://cdn.babylonjs.com/stlExporter/babylon.stlExporter.min.js"></script>
+    <script src="https://cdn.babylonjs.com/gui/babylon.gui.js"></script>
+</head>
+<queenBody>
+    <canvas id="renderCanvas" style="width: 100%; height: 100%;"></canvas>
+    <button id="exportButton" style="position: absolute; top: 10px; left: 10px;">Export STL</button>
+    <script>
+        const canvas = document.getElementById("renderCanvas");
+        const engine = new BABYLON.Engine(canvas, true);
+
+        const createScene = () => {
+            const scene = new BABYLON.Scene(engine);
+
+            // Camera
+            const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 2.5, 15, BABYLON.Vector3.Zero(), scene);
+            camera.attachControl(canvas, true);
+
+            // Light
+            const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
+
+            // Chessboard
+            const boardSize = 8;
+            const tileSize = 1;
+
+            for (let row = 0; row < boardSize; row++) {
+                for (let col = 0; col < boardSize; col++) {
+                    const tile = BABYLON.MeshBuilder.CreateBox(`tile${row}_${col}`, {size: tileSize}, scene);
+                    tile.position = new BABYLON.Vector3(row - boardSize / 2 + 0.5, 0, col - boardSize / 2 + 0.5);
+                    const tileMaterial = new BABYLON.StandardMaterial(`tileMat${row}_${col}`, scene);
+                    tileMaterial.diffuseColor = (row + col) % 2 === 0 ? new BABYLON.Color3(1, 1, 1) : new BABYLON.Color3(0, 0, 0);
+                    tile.material = tileMaterial;
+                }
+            }
+
+            return scene;
+        };
+
+        const scene = createScene();
+
+        const createPiece = (name, position, color) => {
+            let piece;
+            switch (name) {
+                case "pawn":
+                    const pawnBase = BABYLON.MeshBuilder.CreateCylinder('pawnBase', { diameter: 1.5, height: 0.5 }, scene);
+                    const pawnBody = BABYLON.MeshBuilder.CreateSphere('pawnBody', { diameter: 1.2 }, scene);
+                    pawnBody.position.y = 0.8;
+                    piece = BABYLON.CSG.FromMesh(pawnBase)
+                        .union(BABYLON.CSG.FromMesh(pawnBody))
+                        .toMesh('pawn', null, scene);
+                    pawnBase.dispose();
+                    pawnBody.dispose();
+                    break;
+                case "rook":
+                    const rookBase = BABYLON.MeshBuilder.CreateCylinder('queenBase', { diameter: 2, height: 0.5 }, scene);
+                    const rookBody = BABYLON.MeshBuilder.CreateCylinder('queenBody', { diameter: 1.5, height: 3 }, scene);
+                    rookBody.position.y = 1.75;
+                    const rookTop = BABYLON.MeshBuilder.CreateCylinder('top', { diameter: 1.7, height: 0.5 }, scene);
+                    rookTop.position.y = 3.25;
+                    piece = BABYLON.CSG.FromMesh(rookBase).union(BABYLON.CSG.FromMesh(rookBody)).union(BABYLON.CSG.FromMesh(rookTop)).toMesh('rook', null, scene);
+                    rookBase.dispose();
+                    rookBody.dispose();
+                    rookTop.dispose();
+                    break;
+                case "knight":
+                    const knightBase = BABYLON.MeshBuilder.CreateCylinder('knightBase', { diameter: 2, height: 0.5 }, scene);
+                    const knightBody = BABYLON.MeshBuilder.CreateTorus('knightBody', { diameter: 1, thickness: 0.75 }, scene);
+                    const knightHead = BABYLON.MeshBuilder.CreateSphere('knightHead', { diameter: 1.2 }, scene);
+                    knightHead.position.y = 1.5;
+                    knightBody.position.y = 0.75;
+                    piece = BABYLON.CSG.FromMesh(knightBase)
+                        .union(BABYLON.CSG.FromMesh(knightBody))
+                        .union(BABYLON.CSG.FromMesh(knightHead))
+                        .toMesh('knight', null, scene);
+                    knightBase.dispose();
+                    knightBody.dispose();
+                    knightHead.dispose();
+                    break;
+                case "bishop":
+                    const bishopBase = BABYLON.MeshBuilder.CreateCylinder('bishopBase', { diameter: 1, height: 0.5 }, scene);
+                    const bishopBody = BABYLON.MeshBuilder.CreateCylinder('bishopBody', { diameter: 1, height: 2, tessellation: 4 }, scene);
+                    bishopBody.position.y = 1.5;
+                    piece = BABYLON.CSG.FromMesh(bishopBase)
+                        .union(BABYLON.CSG.FromMesh(bishopBody))
+                        .toMesh('bishop', null, scene);
+                    bishopBase.dispose();
+                    bishopBody.dispose();
+                    break;
+                case "queen":
+                    const queenBase = BABYLON.MeshBuilder.CreateCylinder('queenBase', { diameter: 2, height: 0.5 }, scene);
+                    const queenBody = BABYLON.MeshBuilder.CreateCylinder('queenBody', { diameter: 1.5, height: 3 }, scene);
+                    queenBody.position.y = 1.75;
+                    const queenCrown = BABYLON.MeshBuilder.CreateTorus('queenCrown', { diameter: 1.7, thickness: 0.3 }, scene);
+                    queenCrown.position.y = 3.25;
+                    piece = BABYLON.CSG.FromMesh(queenBase)
+                        .union(BABYLON.CSG.FromMesh(queenBody))
+                        .union(BABYLON.CSG.FromMesh(queenCrown))
+                        .toMesh('queen', null, scene);
+                    queenBase.dispose();
+                    queenBody.dispose();
+                    queenCrown.dispose();
+                    break;
+                case "king":
+                    const kingBase = BABYLON.MeshBuilder.CreateCylinder('kingBase', { diameter: 2, height: 0.5 }, scene);
+                    const kingBody = BABYLON.MeshBuilder.CreateCylinder('kingBody', { diameter: 1.5, height: 3 }, scene);
+                    kingBody.position.y = 1.75;
+                    const kingCross = BABYLON.MeshBuilder.CreateBox('kingCross', { size: 0.5 }, scene);
+                    kingCross.position.y = 3.25;
+                    piece = BABYLON.CSG.FromMesh(kingBase)
+                        .union(BABYLON.CSG.FromMesh(kingBody))
+                        .union(BABYLON.CSG.FromMesh(kingCross))
+                        .toMesh('king', null, scene);
+                    kingBase.dispose();
+                    kingBody.dispose();
+                    kingCross.dispose();
+                    break;
+                default:
+                    piece = BABYLON.MeshBuilder.CreateBox(name, {size: 0.5}, scene);
+            }
+            piece.scaling = new BABYLON.Vector3(0.35, 0.35, 0.35);
+            piece.position = position;
+            const pieceMaterial = new BABYLON.StandardMaterial(name + "Mat", scene);
+            pieceMaterial.diffuseColor = color;
+            piece.material = pieceMaterial;
+            piece.actionManager = new BABYLON.ActionManager(scene);
+            piece.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, () => {
+                selectedPiece = piece;
+            }));
+
+            return piece;
+        };
+
+        const pieces = [];
+        // Place pawns
+        for (let i = 0; i < 8; i++) {
+            pieces.push(createPiece("pawn", new BABYLON.Vector3(i - 3.5, 0.5, 2.5), new BABYLON.Color3(1, 1, 1)));
+            pieces.push(createPiece("pawn", new BABYLON.Vector3(i - 3.5, 0.5, -2.5), new BABYLON.Color3(0.3, 0.3, 0.3)));
+        }
+
+        // Place rooks
+        pieces.push(createPiece("rook", new BABYLON.Vector3(-3.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1)));
+        pieces.push(createPiece("rook", new BABYLON.Vector3(3.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1)));
+        pieces.push(createPiece("rook", new BABYLON.Vector3(-3.5, 0.5, -3.5), new BABYLON.Color3(0.3, 0.3, 0.3)));
+        pieces.push(createPiece("rook", new BABYLON.Vector3(3.5, 0.5, -3.5), new BABYLON.Color3(0.3, 0.3, 0.3)));
+
+        // Place knights
+        pieces.push(createPiece("knight", new BABYLON.Vector3(-2.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1)));
+        pieces.push(createPiece("knight", new BABYLON.Vector3(2.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1)));
+        pieces.push(createPiece("knight", new BABYLON.Vector3(-2.5, 0.5, -3.5), new BABYLON.Color3(0.3, 0.3, 0.3)));
+        pieces.push(createPiece("knight", new BABYLON.Vector3(2.5, 0.5, -3.5), new BABYLON.Color3(0.3, 0.3, 0.3)));
+
+        // Place bishops
+        pieces.push(createPiece("bishop", new BABYLON.Vector3(-1.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1)));
+        pieces.push(createPiece("bishop", new BABYLON.Vector3(1.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1)));
+        pieces.push(createPiece("bishop", new BABYLON.Vector3(-1.5, 0.5, -3.5), new BABYLON.Color3(0.3, 0.3, 0.3)));
+        pieces.push(createPiece("bishop", new BABYLON.Vector3(1.5, 0.5, -3.5), new BABYLON.Color3(0.3, 0.3, 0.3)));
+
+        // Place queens
+        pieces.push(createPiece("queen", new BABYLON.Vector3(-0.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1)));
+        pieces.push(createPiece("queen", new BABYLON.Vector3(-0.5, 0.5, -3.5), new BABYLON.Color3(0.3, 0.3, 0.3)));
+
+        // Place kings
+        pieces.push(createPiece("king", new BABYLON.Vector3(0.5, 0.5, 3.5), new BABYLON.Color3(1, 1, 1)));
+        pieces.push(createPiece("king", new BABYLON.Vector3(0.5, 0.5, -3.5), new BABYLON.Color3(0.3, 0.3, 0.3)));
+
+        let selectedPiece = null;
+        let playerTurn = new BABYLON.Color3(1, 1, 1);
+        var advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
+
+        var text1 = new BABYLON.GUI.TextBlock();
+        text1.textVerticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+        text1.text = "White's Turn";
+        text1.color = "red";
+        text1.fontSize = 50;
+        advancedTexture.addControl(text1);
+
+        scene.onPointerDown = (evt, pickResult) => {
+            if (selectedPiece) {
+                if (selectedPiece.material.diffuseColor.equals(playerTurn)) {
+                    const pickedObject = pickResult.pickedMesh;
+                    if (pickedObject && canMove(selectedPiece, pickedObject) && !(pickedObject.position.x == selectedPiece.x && pickedObject.position.z == selectedPiece.position.z)) { 
+                        let newPosX = pickedObject.position.x;
+                        let newPosZ = pickedObject.position.z;
+                        let capturedName = pickedObject.name;
+                        if (pickedObject.position.y == 0.5) {
+                            pickedObject.dispose();
+                        }
+                        else if (pickedObject.name.startsWith("tile") && findPiece(pickedObject)) {
+                            findPiece(pickedObject).dispose();
+                        }
+                        selectedPiece.position = new BABYLON.Vector3(newPosX, 0.5, newPosZ);
+                        if (capturedName == "king") {
+                            let winnerName = playerTurn.equals(new BABYLON.Color3(1, 1, 1)) ? "White" : "Black";
+                            playerTurn.set(0, 0, 0);
+                            text1.text = winnerName + " Wins!";
+                        } else {
+                            let rgbValue = selectedPiece.material.diffuseColor.equals(new BABYLON.Color3(1, 1, 1)) ? 0.3 : 1;
+                            playerTurn.set(rgbValue, rgbValue, rgbValue);
+                            text1.text = playerTurn.equals(new BABYLON.Color3(1, 1, 1)) ? "White's Turn" : "Black's Turn";
+                        }
+                        selectedPiece = null;
+                    } else {
+                        selectedPiece=null;
+                    }
+                }
+            }
+        };
+
+        function canMove(piece, destination) {
+            if (findPiece(destination) && piece.material.diffuseColor.equals(findPiece(destination).material.diffuseColor)) {
+                return false;
+            }
+            else if (piece.name == "knight") {
+                if (((piece.position.x == destination.position.x + 1 || piece.position.x == destination.position.x - 1) && (piece.position.z == destination.position.z + 2 || piece.position.z == destination.position.z - 2)) || ((piece.position.x == destination.position.x + 2 || piece.position.x == destination.position.x - 2) && (piece.position.z == destination.position.z + 1 || piece.position.z == destination.position.z - 1))) {
+                    return true;
+                }
+            } else if (piece.name == "bishop") {
+                if (((piece.position.x - destination.position.x) == (piece.position.z - destination.position.z)) || ((piece.position.x - destination.position.x) == -(piece.position.z - destination.position.z))) {
+                    return !willCollide(piece, destination);
+                }
+            } else if (piece.name == "pawn" && playerTurn.equals(new BABYLON.Color3(1, 1, 1))) {
+                if ((destination.position.x == piece.position.x && !getPieceAtPosition(destination.position.x, destination.position.z) && (destination.position.z == piece.position.z - 1 || (destination.position.z == piece.position.z - 2 && piece.position.z == 2.5 && !willCollide(piece, destination))) || (destination.position.z == piece.position.z - 1 && (destination.position.x == piece.position.x - 1 || destination.position.x == piece.position.x + 1) && getPieceAtPosition(destination.position.x, destination.position.z)))) {
+                    return true;
+                }
+            } else if (piece.name == "pawn" && !playerTurn.equals(new BABYLON.Color3(1, 1, 1))) {
+                if ((destination.position.x == piece.position.x && !getPieceAtPosition(destination.position.x, destination.position.z) && (destination.position.z == piece.position.z + 1 || (destination.position.z == piece.position.z + 2 && piece.position.z == -2.5 && !willCollide(piece, destination))) || (destination.position.z == piece.position.z + 1 && (destination.position.x == piece.position.x - 1 || destination.position.x == piece.position.x + 1) && getPieceAtPosition(destination.position.x, destination.position.z)))) {
+                    return true;
+                }
+            } else if (piece.name == "king") {
+                if (((destination.position.z == piece.position.z + 1 || destination.position.z == piece.position.z - 1) && (destination.position.x == piece.position.x || destination.position.x == piece.position.x + 1 || destination.position.x == piece.position.x - 1)) || (destination.position.z == piece.position.z && (destination.position.x == piece.position.x + 1 || destination.position.x == piece.position.x - 1))) {
+                    return true;
+                }
+            } else if (piece.name == "queen") {
+                if ((destination.position.z == piece.position.z && destination.position.x != piece.position.x) || (destination.position.x == piece.position.x && destination.position.z != piece.position.z) || ((destination.position.z - piece.position.z) == (destination.position.x - piece.position.x)) || ((destination.position.z - piece.position.z) == -(destination.position.x - piece.position.x))) {
+                    return !willCollide(piece, destination);
+                }
+            } else if (piece.name == "rook") {
+                if ((destination.position.z == piece.position.z && destination.position.x != piece.position.x) || (destination.position.x == piece.position.x && destination.position.z != piece.position.z)) {
+                    return !willCollide(piece, destination);
+                }
+            }
+            return false;
+        }
+
+        function willCollide(piece, destination) {
+            let startPos = piece.position;
+            let dirX = Math.sign(destination.position.x - piece.position.x);
+            let dirZ = Math.sign(destination.position.z - piece.position.z);
+            let distX = Math.abs(destination.position.x - piece.position.x - dirX); // These two values are one space closer to the piece from the destination
+            let distZ = Math.abs(destination.position.z - piece.position.z - dirZ);
+            if (piece.position.z == destination.position.z) { // horizontal
+                for (let i = 1; i <= distX; i++) {
+                    if (getPieceAtPosition(startPos.x + i * dirX, startPos.z)) {
+                        return true;
+                    }
+                }
+            } else if (piece.position.x == destination.position.x) { // vertical something wrong here!!!!!
+                for (let i = 1; i <= distZ; i++) {
+                    if (getPieceAtPosition(startPos.x, startPos.z + i * dirZ)) {
+                        return true;
+                    }
+                }
+            } else if (((destination.position.z - piece.position.z) / (destination.position.x - piece.position.x)) != 0) { // diagonal
+                for (let i = 1; i <= distX; i++) {
+                    if (getPieceAtPosition(startPos.x + i * dirX, startPos.z + i * dirZ)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        function getPieceAtPosition(searchX,searchZ) {
+            for (let piece of pieces) {
+                if (piece.position.x == searchX && piece.position.z == searchZ) {
+                    return piece;
+                }
+            }
+            return null;
+        }
+
+        function findPiece(location) {
+            if (location.name.startsWith("tile")) {
+                for (let piece of pieces) {
+                    if (piece.position.x == location.position.x && piece.position.z == location.position.z) {
+                        return piece;
+                    }
+                }
+                return null;
+            } else {
+                return location;
+            }
+        }
+
+        document.getElementById("exportButton").addEventListener("click", () => {
+            pieces.forEach(piece => {
+                const stlString = BABYLON.STLExport.CreateSTL(scene, false, piece);
+                const blob = new Blob([stlString], { type: 'application/octet-stream' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `${piece.name}.stl`;
+                link.click();
+            });
+        });
+
+        engine.runRenderLoop(() => {
+            scene.render();
+        });
+
+        window.addEventListener("resize", () => {
+            engine.resize();
+        });
+    </script>
+</queenBody>
+</html>
