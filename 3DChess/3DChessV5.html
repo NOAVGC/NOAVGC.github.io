@@ -94,7 +94,7 @@
                     bishopBody.dispose();
                     break;
                 case "queen":
-                    piece = await BABYLON.SceneLoader.ImportMeshAsync("", "", "knight.glb", scene);
+                    piece = await BABYLON.SceneLoader.ImportMeshAsync("", "./", "knight.glb", scene);
                     break;
                 case "king":
                     const kingBase = BABYLON.MeshBuilder.CreateCylinder('kingBase', { diameter: 2, height: 0.5 }, scene);
