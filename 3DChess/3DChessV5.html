@@ -45,7 +45,7 @@
 
         const scene = createScene();
 
-        async function createPiece(name, position, color){
+        function createPiece(name, position, color){
             let piece;
             switch (name) {
                 case "pawn":
@@ -94,7 +94,7 @@
                     bishopBody.dispose();
                     break;
                 case "queen":
-                    piece = await BABYLON.SceneLoader.ImportMeshAsync("", "./", "knight.glb", scene);
+                    piece = BABYLON.SceneLoader.ImportMesh("", "./", "knight.glb", scene);
                     break;
                 case "king":
                     const kingBase = BABYLON.MeshBuilder.CreateCylinder('kingBase', { diameter: 2, height: 0.5 }, scene);
