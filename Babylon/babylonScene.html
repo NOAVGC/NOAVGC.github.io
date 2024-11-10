@@ -146,7 +146,7 @@
                     if (switched) {
                         pulseAngle += pulseSpeed;
                         let scaleChange = Math.sin(pulseAngle) * scaleFactor;
-                        boombox.scaling = new BABYLON.Vector3(scaleChange + 30, scaleChange + 30, scaleChange + 30);
+                        boombox.scaling = new BABYLON.Vector3(scaleChange + 30, -scaleChange + 30, scaleChange + 30);
                     }
                 })
                 boombox.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, function () {
