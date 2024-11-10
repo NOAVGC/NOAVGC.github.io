@@ -40,12 +40,12 @@
             const scene = new BABYLON.Scene(engine);
 
             const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2.2, Math.PI / 2.2, 15, new BABYLON.Vector3(0, 0, 0));
-            camera.upperBetaLimit = Math.PI / 2.2;
-            camera.upperRadiusLimit = 75;
-            camera.lowerRadiusLimit = 5;
-            camera.mapPanning = true;
-            camera.panningDistanceLimit = 20;
-            camera.wheelPrecision = 10;
+            camera.upperBetaLimit = Math.PI / 2.2; // prevents rotating through floor
+            camera.upperRadiusLimit = 75; // prevents zooming out too far
+            camera.lowerRadiusLimit = 5; // prevents zooming in too close
+            camera.mapPanning = true; // restrains y axis panning
+            camera.panningDistanceLimit = 20; // restrains panning of camera
+            camera.wheelPrecision = 10; // makes zooming smoother
             camera.attachControl(canvas, true);
             const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(1, 1, 0));
             light.intensity = 1;
@@ -111,7 +111,7 @@
             snowSlider.width = "200px";
             snowSlider.onValueChangedObservable.add((value) => {
                 if (particleSystem) {
-                    particleSystem.emitRate = value * 1500;
+                    particleSystem.emitRate = value * 5000;
                 }
             });
             snowPanel.addControl(snowSlider);
@@ -125,7 +125,7 @@
                 let step = -0.25;
                 let planeRotation = 0.025;
 
-                scene.onBeforeRenderObservable.add(() => {
+                scene.onBeforeRenderObservable.add(() => { // code to make plane fly around scene
                     plane.movePOV(0, 0, step);
                     plane.rotate(new BABYLON.Vector3(0, 1, 0), planeRotation);
                 })
@@ -137,19 +137,19 @@
                 boombox.position = new BABYLON.Vector3(-3, 0.3, 2.75);
                 boombox.scaling = new BABYLON.Vector3(30, 30, 30);
                 boombox.isPickable = true;
-                boombox.actionManager = new BABYLON.ActionManager(scene);
-                let switched = false;
+                boombox.actionManager = new BABYLON.ActionManager(scene); // add an action manager to handle clicking the boombox
+                let switched = false; // variables to track state and control animation
                 let scaleFactor = 4;
                 let pulseAngle = 0;
                 let pulseSpeed = 0.25;
-                scene.onBeforeRenderObservable.add(() => {
-                    if (switched) {
+                scene.onBeforeRenderObservable.add(() => { // animating and music switch code
+                    if (switched) { // only play music and animate when turned on
                         pulseAngle += pulseSpeed;
-                        let scaleChange = Math.sin(pulseAngle) * scaleFactor;
-                        boombox.scaling = new BABYLON.Vector3(scaleChange + 30, -scaleChange + 30, scaleChange + 30);
+                        let scaleChange = Math.sin(pulseAngle) * scaleFactor; // use a sine function to create smooth squash and stretch
+                        boombox.scaling = new BABYLON.Vector3(scaleChange + 30, -scaleChange + 30, scaleChange + 30); // change scaling to simulate squash and stretch
                     }
                 })
-                boombox.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, function () {
+                boombox.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, function () { // handle clicks on boombox
                     switched = !switched;
                     if (switched) {
                         music.play();
@@ -215,7 +215,7 @@
             largeGround.position.y = -0.01;
 
             // Create a particle system
-            var particleSystem = new BABYLON.ParticleSystem("particles", 50000, scene);
+            var particleSystem = new BABYLON.ParticleSystem("particles", 100000, scene);
 
             //Texture of each particle
             particleSystem.particleTexture = new BABYLON.Texture("https://NOAVGC.github.io/Babylon/textures/flare.png", scene);
@@ -239,7 +239,7 @@
             particleSystem.maxLifeTime = 20;
 
             // Emission rate
-            particleSystem.emitRate = 1500;
+            particleSystem.emitRate = 5000;
 
             // Blend mode : BLENDMODE_ONEONE, or BLENDMODE_STANDARD
             particleSystem.blendMode = BABYLON.ParticleSystem.BLENDMODE_ONEONE;
